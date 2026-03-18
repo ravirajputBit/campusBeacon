@@ -4,52 +4,56 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, BookOpen, UserCheck, CreditCard, Home, ChevronRight, Trophy } from "lucide-react";
 import toast from "react-hot-toast";
-
-const steps = [
-  {
-    id: 1,
-    title: "Complete Admission",
-    description: "Submit your final documents at the Admin Block Counter 1.",
-    icon: UserCheck,
-    color: "text-blue-400",
-    bg: "bg-blue-400/10",
-  },
-  {
-    id: 2,
-    title: "Get Student ID",
-    description: "Apply for your smart ID card at the Admin Block reception.",
-    icon: CreditCard,
-    color: "text-purple-400",
-    bg: "bg-purple-400/10",
-  },
-  {
-    id: 3,
-    title: "Library Registration",
-    description: "Register your biometrics at the Central Library.",
-    icon: BookOpen,
-    color: "text-green-400",
-    bg: "bg-green-400/10",
-  },
-  {
-    id: 4,
-    title: "Hostel Check-in",
-    description: "Collect your room keys from the Warden office (Block H).",
-    icon: Home,
-    color: "text-orange-400",
-    bg: "bg-orange-400/10",
-  },
-  {
-    id: 5,
-    title: "Orientation Session",
-    description: "Attend the mandatory orientation in the Main Auditorium.",
-    icon: Trophy,
-    color: "text-pink-400",
-    bg: "bg-pink-400/10",
-  },
-];
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { locations } from "@/data/mockData";
 
 export default function FirstDayPage() {
   const [completed, setCompleted] = useState<number[]>([]);
+
+  // Define steps inside the component to ensure data is loaded
+  const steps = [
+    {
+      id: 1,
+      title: "Complete Admission",
+      description: `Head to the ${locations.find(l => l.id === 'admin-block')?.name || 'Admin Block'} (${locations.find(l => l.id === 'admin-block')?.room || 'Room 101'}) for Admission Queries.`,
+      icon: UserCheck,
+      color: "text-blue-400",
+      bg: "bg-blue-400/10",
+    },
+    {
+      id: 2,
+      title: "Get Student ID",
+      description: `Collect your ID card from ${locations.find(l => l.id === 'admin-block')?.name || 'Admin Block'} (${locations.find(l => l.id === 'admin-block')?.room || 'Room 101'}).`,
+      icon: CreditCard,
+      color: "text-purple-400",
+      bg: "bg-purple-400/10",
+    },
+    {
+      id: 3,
+      title: "Library Registration",
+      description: `Register for library access at ${locations.find(l => l.id === 'central-library')?.name || 'Central Library'} (${locations.find(l => l.id === 'central-library')?.room || 'Ground Floor'}).`,
+      icon: BookOpen,
+      color: "text-green-400",
+      bg: "bg-green-400/10",
+    },
+    {
+      id: 4,
+      title: "Hostel Queries",
+      description: `For room allotment, visit ${locations.find(l => l.id === 'hostel-office')?.name || 'Hostel Office'} (${locations.find(l => l.id === 'hostel-office')?.room || 'Office 1'}).`,
+      icon: Home,
+      color: "text-orange-400",
+      bg: "bg-orange-400/10",
+    },
+    {
+      id: 5,
+      title: "Exam Cell Check",
+      description: `Visit ${locations.find(l => l.id === 'exam-cell')?.name || 'Exam Cell'} (${locations.find(l => l.id === 'exam-cell')?.room || 'Room 210'}) for any result or exam queries.`,
+      icon: Trophy,
+      color: "text-pink-400",
+      bg: "bg-pink-400/10",
+    },
+  ];
 
   const toggleStep = (id: number) => {
     if (completed.includes(id)) {
@@ -79,10 +83,10 @@ export default function FirstDayPage() {
       </header>
 
       {/* Progress Bar */}
-      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md relative overflow-hidden">
+      <div className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-8 relative overflow-hidden border border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-lg flex items-center space-x-2">
-            <span>Your Progress</span>
+            <span className="text-white">Your Progress</span>
             <span className="text-blue-500">{Math.round(progress)}%</span>
           </h3>
           <span className="text-sm text-gray-500">{completed.length} of {steps.length} steps completed</span>
@@ -116,11 +120,12 @@ export default function FirstDayPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
             onClick={() => toggleStep(step.id)}
-            className={`p-6 rounded-3xl border transition-all cursor-pointer group flex items-center space-x-6 ${
+            className={cn(
+              "backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 transition cursor-pointer group flex items-center space-x-6 border",
               completed.includes(step.id)
-                ? "bg-green-500/5 border-green-500/30 opacity-70"
-                : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-blue-500/30"
-            }`}
+                ? "border-green-500/30 opacity-70"
+                : "border-white/10 hover:scale-105"
+            )}
           >
             <div className={`p-4 rounded-2xl ${step.bg} ${step.color} transition-all group-hover:scale-110`}>
               <step.icon className="w-6 h-6" />
@@ -145,15 +150,15 @@ export default function FirstDayPage() {
       </div>
 
       {/* Need Help Section */}
-      <section className="p-8 bg-slate-900/50 border border-white/10 rounded-3xl flex flex-col md:row items-center justify-between gap-6">
+      <section className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-8 flex flex-col md:row items-center justify-between gap-6 border border-white/10 hover:scale-[1.02] transition">
         <div className="space-y-2 text-center md:text-left">
-          <h3 className="font-bold text-xl">Feeling overwhelmed?</h3>
+          <h3 className="font-bold text-xl text-white">Feeling overwhelmed?</h3>
           <p className="text-sm text-gray-400">Our AI assistant is here to guide you through every step.</p>
         </div>
-        <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all flex items-center space-x-2 shadow-lg shadow-blue-500/20 active:scale-95">
+        <Link href="/" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all flex items-center space-x-2 shadow-lg shadow-blue-500/20 active:scale-95">
           <span>Talk to AI Assistant</span>
           <ChevronRight className="w-5 h-5" />
-        </button>
+        </Link>
       </section>
     </div>
   );

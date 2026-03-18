@@ -5,6 +5,8 @@ import { AIAssistant } from "@/components/AIAssistant";
 import { TaskSearch } from "@/components/TaskSearch";
 import { Sparkles, MapPin, Compass, BookOpen, Clock, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { locations } from "@/data/mockData";
+import { cn } from "@/lib/utils";
 
 const container = {
   hidden: { opacity: 0 },
@@ -138,17 +140,30 @@ export default function Home() {
           >
             <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Campus Pulse</h4>
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4 text-blue-400" />
-                  <span>Admin Block</span>
-                </div>
-                <span className="text-green-500 font-medium">Open</span>
-              </div>
+              {locations.slice(0, 2).map((loc) => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                // Simple logic: Open if between 9 AM and 6 PM
+                const isOpen = currentHour >= 9 && currentHour < 18;
+                return (
+                  <div key={loc.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-blue-400" />
+                      <span className="text-white">{loc.name}</span>
+                    </div>
+                    <span className={cn(
+                      "font-medium",
+                      isOpen ? "text-green-500" : "text-red-500"
+                    )}>
+                      {isOpen ? "Open" : "Closed"}
+                    </span>
+                  </div>
+                );
+              })}
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <ShieldCheck className="w-4 h-4 text-purple-400" />
-                  <span>Campus Wi-Fi</span>
+                  <span className="text-white">Campus Wi-Fi</span>
                 </div>
                 <span className="text-green-500 font-medium">Stable</span>
               </div>

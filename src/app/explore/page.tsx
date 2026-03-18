@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Coffee, Library, Trophy, Users, ArrowUpRight, Star } from "lucide-react";
 import { locations } from "@/data/mockData";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 const categories = [
   { name: "Study Spots", icon: Library, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
@@ -104,7 +105,7 @@ export default function ExplorePage() {
                 </div>
 
                 <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
-                  {spot.description || "A popular spot for students to gather and spend quality time between classes."}
+                  {"A popular spot for students to gather and spend quality time between classes."}
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-2">

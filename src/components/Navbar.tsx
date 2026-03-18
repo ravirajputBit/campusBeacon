@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, Map, Compass, BookOpen, AlertCircle, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 const navItems = [
   { name: "Home", href: "/", icon: Home },
@@ -17,6 +18,14 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleImLost = () => {
+    toast.error("Don't worry! We're here to help.", {
+      icon: '📍',
+      duration: 5000,
+    });
+    window.location.href = "/map";
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
@@ -51,7 +60,10 @@ export function Navbar() {
               )}
             </Link>
           ))}
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95 flex items-center space-x-2">
+          <button 
+            onClick={handleImLost}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95 flex items-center space-x-2"
+          >
             <AlertCircle className="w-4 h-4" />
             <span>I&apos;m Lost</span>
           </button>
@@ -90,7 +102,10 @@ export function Navbar() {
                   <span>{item.name}</span>
                 </Link>
               ))}
-              <button className="w-full bg-red-600/20 border border-red-500/50 text-red-400 p-3 rounded-xl flex items-center justify-center space-x-2">
+              <button 
+                onClick={handleImLost}
+                className="w-full bg-red-600/20 border border-red-500/50 text-red-400 p-3 rounded-xl flex items-center justify-center space-x-2"
+              >
                 <AlertCircle className="w-5 h-5" />
                 <span>I&apos;m Lost</span>
               </button>

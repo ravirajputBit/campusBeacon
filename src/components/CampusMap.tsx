@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from 'next/navigation';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { locations } from "@/data/mockData";
-import { MapPin, Navigation, Clock, Info } from "lucide-react";
+import { MapPin, Navigation, Clock, Info, Crosshair, Star, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,29 @@ const DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+function UserLocationMarker() {
+  const [position, setPosition] = useState<[number, number] | null>(null);
+  const map = useMap();
+
+  useEffect(() => {
+    map.locate().on("locationfound", (e) => {
+      setPosition([e.latlng.lat, e.latlng.lng]);
+    });
+  }, [map]);
+
+  return position === null ? null : (
+    <>
+      <Marker position={position} icon={L.divIcon({
+        className: 'user-location-icon',
+        html: `<div class="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg animate-pulse"></div>`
+      })}>
+        <Popup>You are here</Popup>
+      </Marker>
+      <Circle center={position} radius={50} pathOptions={{ fillColor: 'blue', color: 'transparent' }} />
+    </>
+  );
+}
+
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
@@ -28,14 +52,53 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export default function CampusMap() {
+  const searchParams = useSearchParams();
+  const locationId = searchParams.get('location');
+  const filterParam = searchParams.get('filter');
+
   const [mounted, setMounted] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(locations[0]);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([28.3670, 77.5400]);
+  const [activeFilter, setActiveFilter] = useState(filterParam ? filterParam.charAt(0).toUpperCase() + filterParam.slice(1) : 'All');
+  
+  const initialLocation = locations.find(l => l.id === locationId) || locations[0];
+  const [selectedLocation, setSelectedLocation] = useState(initialLocation);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(initialLocation.coordinates);
+
+  const handleLocate = useCallback(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
+        setMapCenter(coords);
+      });
+    }
+  }, []);
+
+  const filteredLocations = locations.filter(loc => {
+    if (activeFilter === 'All') return true;
+    if (activeFilter === 'Food') return loc.type === 'food';
+    return loc.type?.toLowerCase() === activeFilter.toLowerCase();
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (locationId) {
+      const locationFromURL = locations.find(l => l.id === locationId);
+      if (locationFromURL) {
+        setSelectedLocation(locationFromURL);
+        setMapCenter(locationFromURL.coordinates);
+      }
+    }
+  }, [locationId]);
+
+  useEffect(() => {
+    if (filterParam) {
+      const formattedFilter = filterParam === 'food' ? 'Food' : filterParam.charAt(0).toUpperCase() + filterParam.slice(1);
+      setActiveFilter(formattedFilter);
+    }
+  }, [filterParam]);
 
   if (!mounted) {
     return (
@@ -52,46 +115,77 @@ export default function CampusMap() {
     <div className="space-y-6">
       <div className="flex flex-col md:row items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Campus Navigator</h1>
+          <h1 className="text-3xl font-bold text-white">Campus Navigator</h1>
           <p className="text-gray-400">Find your way around the campus effortlessly</p>
         </div>
-        <div className="flex space-x-2 overflow-x-auto pb-2 w-full md:w-auto">
-          {['All', 'Academic', 'Administrative', 'Food', 'Sports'].map((type) => (
-            <button
-              key={type}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm whitespace-nowrap hover:bg-white/10 transition-colors"
-            >
-              {type}
-            </button>
-          ))}
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={handleLocate}
+            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all shadow-lg active:scale-95"
+            title="My Location"
+          >
+            <Crosshair className="w-5 h-5" />
+          </button>
+          <div className="flex space-x-2 overflow-x-auto pb-2 w-full md:w-auto">
+            {['All', 'Academic', 'Administrative', 'Food', 'Sports'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setActiveFilter(type)}
+                className={cn(
+                  "px-4 py-2 border rounded-xl text-sm whitespace-nowrap transition-all backdrop-blur-md",
+                  activeFilter === type
+                    ? "bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20"
+                    : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar: Location List */}
         <div className="lg:col-span-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
-          {locations.map((loc) => (
-            <motion.div
-              key={loc.id}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => {
-                setSelectedLocation(loc);
-                setMapCenter(loc.coordinates);
-              }}
-              className={cn(
-                "backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-4 transition cursor-pointer border",
-                selectedLocation.id === loc.id
-                  ? "border-blue-500 ring-2 ring-blue-500/20"
-                  : "border-white/10"
-              )}
-            >
-              <h3 className="font-bold text-white flex items-center space-x-2">
-                <MapPin className={`w-4 h-4 ${selectedLocation.id === loc.id ? "text-blue-400" : "text-gray-500"}`} />
-                <span>{loc.name}</span>
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">{loc.block}, {loc.room}</p>
-            </motion.div>
-          ))}
+          {filteredLocations.length > 0 ? (
+            filteredLocations.map((loc) => (
+              <motion.div
+                key={loc.id}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => {
+                  setSelectedLocation(loc);
+                  setMapCenter(loc.coordinates);
+                }}
+                className={cn(
+                  "backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-4 transition cursor-pointer border",
+                  selectedLocation.id === loc.id
+                    ? "border-blue-500 ring-2 ring-blue-500/20"
+                    : "border-white/10"
+                )}
+              >
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold text-white flex items-center space-x-2">
+                    <MapPin className={`w-4 h-4 ${selectedLocation.id === loc.id ? "text-blue-400" : "text-gray-500"}`} />
+                    <span>{loc.name}</span>
+                  </h3>
+                  <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-blue-400 transition-colors">
+                      <Star className="w-3 h-3" />
+                    </button>
+                    <button className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-green-400 transition-colors">
+                      <Share2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">{loc.block}, {loc.room}</p>
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-center p-8 bg-white/5 rounded-2xl border border-white/10">
+              <p className="text-gray-500 text-sm">No locations found for this category.</p>
+            </div>
+          )}
         </div>
 
         {/* Map Display */}
@@ -107,7 +201,8 @@ export default function CampusMap() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <MapUpdater center={mapCenter} />
-            {locations.map((loc, index) => ( 
+            <UserLocationMarker />
+            {filteredLocations.map((loc, index) => ( 
               <Marker 
                 key={index} 
                 position={loc.coordinates}
@@ -116,9 +211,11 @@ export default function CampusMap() {
                 }}
               > 
                 <Popup> 
-                  <b>{loc.name}</b><br /> 
-                  {loc.block}<br /> 
-                  {loc.timing} 
+                  <div className="p-1">
+                    <b className="text-slate-900">{loc.name}</b><br /> 
+                    <span className="text-slate-600 text-xs">{loc.block}</span><br /> 
+                    <span className="text-slate-600 text-xs">{loc.timing}</span>
+                  </div>
                 </Popup> 
               </Marker> 
             ))}
@@ -158,12 +255,22 @@ export default function CampusMap() {
                   </div>
 
                   <div className="mt-6 flex space-x-3">
-                    <button className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-sm font-semibold transition-all">
+                    <a
+                      href={`https://www.google.com/search?tbm=isch&q=Galgotias+University+${encodeURIComponent(selectedLocation.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-sm font-semibold transition-all text-center"
+                    >
                       View Photos
-                    </button>
-                    <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-semibold transition-all">
+                    </a>
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLocation.coordinates[0]},${selectedLocation.coordinates[1]}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-semibold transition-all text-center"
+                    >
                       Directions
-                    </button>
+                    </a>
                   </div>
                 </div>
               </motion.div>

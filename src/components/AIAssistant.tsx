@@ -55,16 +55,29 @@ export function AIAssistant() {
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.text || "I'm sorry, I couldn't process that. Try asking about the Administrative Block.",
+        content: data.text || data.error || "I'm sorry, I couldn't process that. Try asking about the Admin Block.",
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (error) {
       console.error("Chat error:", error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Sorry, I encountered an error. Please check your connection and try again.",
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const quickActions = [
+    "Where is the Library?",
+    "How to get ID card?",
+    "Exam Cell location",
+    "Hostel office timing"
+  ];
 
   return (
     <div className="flex flex-col h-[600px] backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-4 hover:scale-[1.01] transition overflow-hidden">
@@ -111,7 +124,7 @@ export function AIAssistant() {
                 className={cn(
                   "p-3 rounded-2xl text-sm leading-relaxed shadow-sm",
                   msg.role === "assistant"
-                    ? "bg-white/10 text-white rounded-tl-none border border-white/5"
+                    ? "bg-white/10 text-white rounded-tl-none border border-white/5 whitespace-pre-wrap"
                     : "bg-blue-600 text-white rounded-tr-none shadow-blue-500/20"
                 )}
               >
@@ -132,8 +145,31 @@ export function AIAssistant() {
         </AnimatePresence>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t border-white/10 bg-white/5">
-        <div className="relative">
+      <div className="p-4 border-t border-white/10 bg-white/5 space-y-4">
+        <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
+          {quickActions.map((action) => (
+            <button
+              key={action}
+              onClick={() => {
+                setInput(action);
+                // Trigger manual submit simulation
+                const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                setTimeout(() => {
+                  const inputEl = document.querySelector('input[placeholder="Type your question..."]') as HTMLInputElement;
+                  if (inputEl) {
+                    inputEl.value = action;
+                    const form = inputEl.closest('form');
+                    if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                  }
+                }, 0);
+              }}
+              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-[10px] text-gray-400 hover:text-white whitespace-nowrap transition-all"
+            >
+              {action}
+            </button>
+          ))}
+        </div>
+        <form onSubmit={handleSubmit} className="relative">
           <input
             type="text"
             value={input}
@@ -148,8 +184,8 @@ export function AIAssistant() {
           >
             <Send className="w-4 h-4" />
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

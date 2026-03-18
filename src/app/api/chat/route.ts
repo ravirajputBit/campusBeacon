@@ -6,53 +6,88 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const body = await req.json();
+    // Handle both 'prompt' and 'message' to be safe
+    const prompt = body.prompt || body.message || "";
+    const query = prompt.toLowerCase().trim();
 
-    if (!process.env.GEMINI_API_KEY) {
-      // Fallback if no API key is provided for demo purposes
-      const lowercasePrompt = prompt.toLowerCase();
-      if (lowercasePrompt.includes("id card")) {
-        return NextResponse.json({ 
-          text: "Location: Admin Block\nRoom: Room 101\nTiming: 10 AM - 4 PM\nSteps: Submit Admission Slip and Photo." 
-        });
-      }
-      if (lowercasePrompt.includes("library")) {
-        return NextResponse.json({ 
-          text: "Location: Central Library\nRoom: Ground Floor\nTiming: 9 AM - 8 PM\nSteps: Carry your ID Card for access." 
-        });
-      }
-      return NextResponse.json({ 
-        text: "I'm currently in demo mode without an API key. You can ask about 'ID card' or 'Library' to see sample responses." 
+    if (!query) {
+      return Response.json({ text: "Please ask a question about the campus." });
+    }
+
+    // ✅ 1. Check task (improved matching)
+    const taskMatch = tasks.find(t => {
+      const taskName = t.task.toLowerCase();
+      return query.includes(taskName) || taskName.includes(query);
+    });
+
+    if (taskMatch) {
+      return Response.json({
+        text: `Location: ${taskMatch.location}\nRoom: ${taskMatch.room}\nTiming: ${taskMatch.timing}\nDocuments: ${taskMatch.documents.join(", ")}`
       });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // ✅ 2. Check location (improved matching)
+    const locationMatch = locations.find(l => {
+      const locName = l.name.toLowerCase();
+      return query.includes(locName) || locName.includes(query);
+    });
 
-    const systemPrompt = ` 
- You are a campus assistant for Galgotias University. 
- 
- Answer ONLY from given campus data. 
- 
- Format: 
- Location: 
- Room: 
- Timing: 
- Steps: 
- 
- Do not give random answers. 
- 
- Campus Data:
- Locations: ${JSON.stringify(locations)}
- Tasks: ${JSON.stringify(tasks)}
- `;
+    if (locationMatch) {
+      return Response.json({
+        text: `Location: ${locationMatch.name}\nBlock: ${locationMatch.block}\nRoom: ${locationMatch.room}\nServices: ${locationMatch.services.join(", ")}\nTiming: ${locationMatch.timing}`
+      });
+    }
 
-    const result = await model.generateContent([systemPrompt, prompt]);
-    const response = await result.response;
-    const text = response.text();
+    const message = prompt;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return Response.json({ text: "I'm currently in demo mode without an API key. Try asking about Admin Block or ID card." });
+    }
 
-    return NextResponse.json({ text });
-  } catch (error) {
+    // Add Galgotias University context to the AI fallback
+    const aiPrompt = `
+      You are a campus assistant for Galgotias University. 
+      Use this data to answer if relevant:
+      Locations: ${JSON.stringify(locations)}
+      Tasks: ${JSON.stringify(tasks)}
+      
+      User Question: ${message}
+      
+      If the answer is in the data, use it. If not, try to answer generally about Galgotias University or suggest visiting the Admin Block.
+      Keep it concise and follow this format:
+      Location: 
+      Room: 
+      Timing: 
+      Steps/Info:
+    `;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: aiPrompt }],
+            },
+          ],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "I'm sorry, I couldn't find specific information about that. Try asking about the Admin Block, ID card, or Library.";
+
+    return Response.json({ text });
+  } catch (error: any) {
     console.error("AI Error:", error);
-    return NextResponse.json({ error: "Failed to generate response" }, { status: 500 });
+    return Response.json({ text: "I encountered an error while processing your request. Please try again later." });
   }
 }
