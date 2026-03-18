@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "./Navbar";
+import { Footer } from "./Footer";
 import { Toaster } from "react-hot-toast";
 
 const pageVariants = {
@@ -36,6 +37,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <Footer />
 
       <Toaster position="bottom-right" toastOptions={{
         className: 'bg-slate-900 text-white border border-white/10 rounded-2xl backdrop-blur-md',
