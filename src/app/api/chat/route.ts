@@ -7,85 +7,101 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    // Handle both 'prompt' and 'message' to be safe
     const prompt = body.prompt || body.message || "";
     const query = prompt.toLowerCase().trim();
 
     if (!query) {
-      return Response.json({ text: "Please ask a question about the campus." });
+      return NextResponse.json({ text: "Please ask a question about the campus." });
     }
 
     // ✅ 1. Check task (improved matching)
     const taskMatch = tasks.find(t => {
       const taskName = t.task.toLowerCase();
-      return query.includes(taskName) || taskName.includes(query);
+      const keywords = taskName.split(" ");
+      return query.includes(taskName) || keywords.some(kw => kw.length > 2 && query.includes(kw));
     });
 
     if (taskMatch) {
-      return Response.json({
-        text: `Location: ${taskMatch.location}\nRoom: ${taskMatch.room}\nTiming: ${taskMatch.timing}\nDocuments: ${taskMatch.documents.join(", ")}`
+      return NextResponse.json({
+        text: `**Task Found:** ${taskMatch.task}\n\n**Location:** ${taskMatch.location}\n**Room:** ${taskMatch.room}\n**Timing:** ${taskMatch.timing}\n**Documents Required:**\n- ${taskMatch.documents.join("\n- ")}`
       });
     }
 
     // ✅ 2. Check location (improved matching)
     const locationMatch = locations.find(l => {
       const locName = l.name.toLowerCase();
-      return query.includes(locName) || locName.includes(query);
+      const locId = l.id.toLowerCase();
+      const keywords = ["library", "librayi", "cafeteria", "canteen", "sports", "gym", "admin", "examination", "hostel", "mess", "agriculture", "drone", "parking"];
+      
+      const matchedKeyword = keywords.find(kw => query.includes(kw));
+      if (matchedKeyword && locName.includes(matchedKeyword)) return true;
+
+      // Handle A Block and AI & DS Block separately
+      if (query.includes("ai & ds") || query.includes("artificial intelligence")) {
+        if (locId === "block-aids") return true;
+      } else if (query.includes("a block")) {
+        if (locId === "block-a") return true;
+      }
+      
+      return query.includes(locName) || locName.includes(query) || query.includes(locId);
     });
 
     if (locationMatch) {
-      return Response.json({
-        text: `Location: ${locationMatch.name}\nBlock: ${locationMatch.block}\nRoom: ${locationMatch.room}\nServices: ${locationMatch.services.join(", ")}\nTiming: ${locationMatch.timing}`
+      return NextResponse.json({
+        text: `**Location Found:** ${locationMatch.name}\n\n**Block:** ${locationMatch.block}\n**Room:** ${locationMatch.room}\n**Timing:** ${locationMatch.timing}\n**Services:** ${locationMatch.services.join(", ")}`
       });
     }
 
-    const message = prompt;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return Response.json({ text: "I'm currently in demo mode without an API key. Try asking about Admin Block or ID card." });
+      return NextResponse.json({ 
+        text: "I'm currently in demo mode. I can help with specific campus locations like the Administrative Block, Library, or Cafeteria. For full AI capabilities, please configure the API key." 
+      });
     }
 
     // Add Galgotias University context to the AI fallback
-    const aiPrompt = `
-      You are a campus assistant for Galgotias University. 
-      Use this data to answer if relevant:
+    const systemInstruction = `
+      You are "Beacon AI", the official campus assistant for Galgotias University. 
+      Your goal is to help students navigate the campus and complete administrative tasks.
+      
+      CONTEXT DATA:
       Locations: ${JSON.stringify(locations)}
       Tasks: ${JSON.stringify(tasks)}
       
-      User Question: ${message}
+      SPECIFIC CAMPUS INFO:
+      - A Block is a standard academic block for general lectures and faculty.
+      - AI & DS Block is the "Artificial Intelligence and Data Science Block". It is the most modern and advanced building on campus.
+      - For anything related to AI, Machine Learning, or Advanced Computing, direct users to the AI & DS Block.
+      - C Block is the hub for Management and Commerce studies.
+      - The Hostel and Mess are located in the residential zone near the Sports Area.
       
-      If the answer is in the data, use it. If not, try to answer generally about Galgotias University or suggest visiting the Admin Block.
-      Keep it concise and follow this format:
-      Location: 
-      Room: 
-      Timing: 
-      Steps/Info:
+      STRICT RULES:
+      1. If the user asks about a location or task present in the CONTEXT DATA, use that data EXACTLY.
+      2. Handle common Hinglish/Hinglish-English queries (e.g., "kaha hai", "kya documents chahiye", "librayi").
+      3. Use the SPECIFIC CAMPUS INFO to provide more accurate answers for A Block and other departments.
+      4. If the data is not present, answer generally about Galgotias University based on your knowledge.
+      4. Always be polite, professional, and helpful.
+      5. Use Markdown for formatting (bolding, lists).
+      6. Keep responses concise (under 3 sentences unless listing steps).
+      7. If you don't know the answer, suggest visiting the "Administrative Block" or "Reception".
+      
+      FORMAT FOR DATA ANSWERS:
+      **Location:** [Name]
+      **Room:** [Room Number/Floor]
+      **Timing:** [Operating Hours]
+      **Info:** [Brief description or steps]
     `;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: aiPrompt }],
-            },
-          ],
-        }),
-      }
-    );
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash-latest",
+      systemInstruction: systemInstruction
+    });
 
-    const data = await response.json();
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text() || "I'm sorry, I couldn't find specific information about that. Try asking about the Admin Block, ID card, or Library.";
 
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "I'm sorry, I couldn't find specific information about that. Try asking about the Admin Block, ID card, or Library.";
-
-    return Response.json({ text });
+    return NextResponse.json({ text });
   } catch (error: any) {
     console.error("AI Error:", error);
     return Response.json({ text: "I encountered an error while processing your request. Please try again later." });

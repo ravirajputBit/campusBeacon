@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Coffee, Library, Trophy, Users, ArrowUpRight, Star } from "lucide-react";
+import { Coffee, Library, Trophy, Users, ArrowUpRight, Star, MapPin } from "lucide-react";
 import { locations } from "@/data/mockData";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -11,6 +11,31 @@ const categories = [
   { name: "Cafeteria", icon: Coffee, color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20", type: "food" },
   { name: "Sports", icon: Trophy, color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20", type: "sports" },
   { name: "Utility", icon: Users, color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20", type: "utility" },
+];
+
+// Edit these demo links as per your requirement
+const TOP_RATED_SPOTS = [
+  {
+    id: "central-library",
+    name: "Central Library",
+    block: "Knowledge Centre",
+    type: "utility",
+    image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "block-aids",
+    name: "AI & DS Block",
+    block: "Academic Block",
+    type: "academic",
+    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "cafeteria",
+    name: "Cafeteria",
+    block: "Food Court",
+    type: "food",
+    image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1000&auto=format&fit=crop"
+  }
 ];
 
 const container = {
@@ -29,7 +54,14 @@ const item = {
 };
 
 export default function ExplorePage() {
-  const featuredSpots = locations.filter(l => l.type !== 'administrative');
+  const getSpotIcon = (type: string | undefined) => {
+    switch (type?.toLowerCase()) {
+      case 'food': return Coffee;
+      case 'utility': return Library;
+      case 'sports': return Trophy;
+      default: return MapPin;
+    }
+  };
 
   return (
     <div className="space-y-12 pb-20">
@@ -79,17 +111,18 @@ export default function ExplorePage() {
           animate="show"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
-          {featuredSpots.map((spot) => (
+          {TOP_RATED_SPOTS.map((spot) => (
             <Link href={`/map?location=${spot.id}`} key={spot.id}>
               <motion.div
+                key={spot.id}
                 variants={item}
                 whileHover={{ scale: 1.05 }}
-                className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl overflow-hidden transition-all border border-white/10 group h-full"
+                className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl overflow-hidden transition-all border border-white/10 group h-full cursor-pointer"
               >
                 <div className="relative h-48 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-10" />
                   <img 
-                    src={`https://images.unsplash.com/photo-1541339907198-e08756ebafe3?q=80&w=800&auto=format&fit=crop`} 
+                    src={spot.image} 
                     alt={spot.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -102,7 +135,10 @@ export default function ExplorePage() {
                 <div className="p-6 space-y-3">
                   <h3 className="font-bold text-xl text-white group-hover:text-blue-400 transition-colors">{spot.name}</h3>
                   <div className="flex items-center text-sm text-gray-400 space-x-2">
-                    <MapPin className="w-4 h-4" />
+                    {(() => {
+                      const Icon = getSpotIcon(spot.type);
+                      return <Icon className="w-4 h-4 text-blue-400" />;
+                    })()}
                     <span>{spot.block}</span>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-white/5">

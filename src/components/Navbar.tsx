@@ -46,7 +46,7 @@ export function Navbar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "relative flex items-center space-x-2 text-sm font-medium transition-colors hover:text-white",
+                "relative flex items-center space-x-2 text-sm font-medium transition-colors hover:text-white outline-none",
                 pathname === item.href ? "text-white" : "text-gray-400"
               )}
             >
@@ -94,7 +94,7 @@ export function Navbar() {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-center space-x-3 p-3 rounded-xl transition-colors",
+                    "flex items-center space-x-3 p-3 rounded-xl transition-colors w-full text-left outline-none",
                     pathname === item.href ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5"
                   )}
                 >

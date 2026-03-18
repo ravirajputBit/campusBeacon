@@ -6,7 +6,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from "react-le
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { locations } from "@/data/mockData";
-import { MapPin, Navigation, Clock, Info, Crosshair, Star, Share2 } from "lucide-react";
+import { MapPin, Navigation, Clock, Info, Crosshair, Star, Share2, Trophy, Coffee, Library, Building2, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +59,24 @@ export default function CampusMap() {
   const [mounted, setMounted] = useState(false);
   const [activeFilter, setActiveFilter] = useState(filterParam ? filterParam.charAt(0).toUpperCase() + filterParam.slice(1) : 'All');
   
+  const filterTypes = [
+    { name: 'All', icon: Layers },
+    { name: 'Academic', icon: Library },
+    { name: 'Administrative', icon: Building2 },
+    { name: 'Food', icon: Coffee },
+    { name: 'Sports', icon: Trophy }
+  ];
+
+  const getTypeIcon = (type: string | undefined) => {
+    switch (type?.toLowerCase()) {
+      case 'academic': return Library;
+      case 'administrative': return Building2;
+      case 'food': return Coffee;
+      case 'sports': return Trophy;
+      default: return MapPin;
+    }
+  };
+  
   const initialLocation = locations.find(l => l.id === locationId) || locations[0];
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
   const [mapCenter, setMapCenter] = useState<[number, number]>(initialLocation.coordinates);
@@ -74,7 +92,6 @@ export default function CampusMap() {
 
   const filteredLocations = locations.filter(loc => {
     if (activeFilter === 'All') return true;
-    if (activeFilter === 'Food') return loc.type === 'food';
     return loc.type?.toLowerCase() === activeFilter.toLowerCase();
   });
 
@@ -95,7 +112,7 @@ export default function CampusMap() {
 
   useEffect(() => {
     if (filterParam) {
-      const formattedFilter = filterParam === 'food' ? 'Food' : filterParam.charAt(0).toUpperCase() + filterParam.slice(1);
+      const formattedFilter = filterParam.charAt(0).toUpperCase() + filterParam.slice(1);
       setActiveFilter(formattedFilter);
     }
   }, [filterParam]);
@@ -121,24 +138,25 @@ export default function CampusMap() {
         <div className="flex items-center space-x-4">
           <button 
             onClick={handleLocate}
-            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all shadow-lg active:scale-95"
+            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all shadow-lg active:scale-95 border border-white/10"
             title="My Location"
           >
             <Crosshair className="w-5 h-5" />
           </button>
-          <div className="flex space-x-2 overflow-x-auto pb-2 w-full md:w-auto">
-            {['All', 'Academic', 'Administrative', 'Food', 'Sports'].map((type) => (
+          <div className="flex space-x-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
+            {filterTypes.map((type) => (
               <button
-                key={type}
-                onClick={() => setActiveFilter(type)}
+                key={type.name}
+                onClick={() => setActiveFilter(type.name)}
                 className={cn(
-                  "px-4 py-2 border rounded-xl text-sm whitespace-nowrap transition-all backdrop-blur-md",
-                  activeFilter === type
+                  "px-4 py-2 border rounded-xl text-sm whitespace-nowrap transition-all backdrop-blur-md flex items-center space-x-2",
+                  activeFilter === type.name
                     ? "bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20"
                     : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
                 )}
               >
-                {type}
+                <type.icon className="w-4 h-4" />
+                <span>{type.name}</span>
               </button>
             ))}
           </div>
@@ -158,7 +176,7 @@ export default function CampusMap() {
                   setMapCenter(loc.coordinates);
                 }}
                 className={cn(
-                  "backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-4 transition cursor-pointer border",
+                  "backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-4 transition cursor-pointer border group",
                   selectedLocation.id === loc.id
                     ? "border-blue-500 ring-2 ring-blue-500/20"
                     : "border-white/10"
@@ -166,7 +184,10 @@ export default function CampusMap() {
               >
                 <div className="flex justify-between items-start">
                   <h3 className="font-bold text-white flex items-center space-x-2">
-                    <MapPin className={`w-4 h-4 ${selectedLocation.id === loc.id ? "text-blue-400" : "text-gray-500"}`} />
+                    {(() => {
+                      const Icon = getTypeIcon(loc.type);
+                      return <Icon className={`w-4 h-4 ${selectedLocation.id === loc.id ? "text-blue-400" : "text-gray-500"}`} />;
+                    })()}
                     <span>{loc.name}</span>
                   </h3>
                   <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">

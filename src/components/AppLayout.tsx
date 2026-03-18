@@ -13,12 +13,11 @@ const pageVariants = {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
+    <div className="min-h-screen text-white selection:bg-blue-500/30 overflow-x-hidden">
       {/* Background gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px]" />
-        <div className="absolute bottom-0 -right-[10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[150px]" />
+        <div className="absolute top-0 -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px]" />
+        <div className="absolute bottom-0 -right-[10%] w-[40%] h-[40%] rounded-full bg-purple-600/10 blur-[120px]" />
       </div>
 
       <Navbar />

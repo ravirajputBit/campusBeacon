@@ -57,6 +57,7 @@ export default function Home() {
         </motion.p>
 
         <motion.div
+          id="task-search-section"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -184,33 +185,50 @@ export default function Home() {
       {/* Features Showcase */}
       <section className="pt-20 border-t border-white/5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 hover:scale-105 transition border border-white/10 space-y-4">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white">Smart Task Engine</h3>
-            <p className="text-gray-400 leading-relaxed">
-              Don&apos;t know where to go for a bonafide? Just search the task and we&apos;ll tell you the exact room, building, and documents required.
-            </p>
-          </div>
-          <div className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 hover:scale-105 transition border border-white/10 space-y-4">
-            <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white">Live Map Integration</h3>
-            <p className="text-gray-400 leading-relaxed">
-              Interactive Leaflet maps with real campus markers. Get live navigation and building details at your fingertips.
-            </p>
-          </div>
-          <div className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 hover:scale-105 transition border border-white/10 space-y-4">
-            <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center text-green-400">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <h3 className="text-xl font-bold text-white">First Day Guidance</h3>
-            <p className="text-gray-400 leading-relaxed">
-              A specialized mode for new students that guides them through the initial chaos of campus life with a curated checklist.
-            </p>
-          </div>
+          <Link href="#task-search-section">
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 transition border border-white/10 space-y-4 cursor-pointer group h-full"
+            >
+              <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">Smart Task Engine</h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Don&apos;t know where to go for a bonafide? Just search the task and we&apos;ll tell you the exact room, building, and documents required.
+              </p>
+            </motion.div>
+          </Link>
+
+          <Link href="/map">
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 transition border border-white/10 space-y-4 cursor-pointer group h-full"
+            >
+              <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors">Live Map Integration</h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Interactive Leaflet maps with real campus markers. Get live navigation and building details at your fingertips.
+              </p>
+            </motion.div>
+          </Link>
+
+          <Link href="/first-day">
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="backdrop-blur-lg bg-white/10 rounded-xl shadow-xl p-6 transition border border-white/10 space-y-4 cursor-pointer group h-full"
+            >
+              <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center text-green-400 group-hover:bg-green-500 group-hover:text-white transition-all">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white group-hover:text-green-400 transition-colors">First Day Guidance</h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                A specialized mode for new students that guides them through the initial chaos of campus life with a curated checklist.
+              </p>
+            </motion.div>
+          </Link>
         </div>
       </section>
     </div>

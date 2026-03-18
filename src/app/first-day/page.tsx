@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Circle, BookOpen, UserCheck, CreditCard, Home, ChevronRight, Trophy } from "lucide-react";
 import toast from "react-hot-toast";
+import { locations } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { locations } from "@/data/mockData";
 
 export default function FirstDayPage() {
   const [completed, setCompleted] = useState<number[]>([]);
 
-  // Define steps inside the component to ensure data is loaded
   const steps = [
     {
       id: 1,
@@ -24,7 +23,7 @@ export default function FirstDayPage() {
     {
       id: 2,
       title: "Get Student ID",
-      description: `Collect your ID card from ${locations.find(l => l.id === 'admin-block')?.name || 'Admin Block'} (${locations.find(l => l.id === 'admin-block')?.room || 'Room 101'}).`,
+      description: `Apply for your smart ID card at the ${locations.find(l => l.id === 'admin-block')?.name || 'Admin Block'} reception.`,
       icon: CreditCard,
       color: "text-purple-400",
       bg: "bg-purple-400/10",
@@ -32,23 +31,23 @@ export default function FirstDayPage() {
     {
       id: 3,
       title: "Library Registration",
-      description: `Register for library access at ${locations.find(l => l.id === 'central-library')?.name || 'Central Library'} (${locations.find(l => l.id === 'central-library')?.room || 'Ground Floor'}).`,
+      description: `Register your biometrics at the ${locations.find(l => l.type === 'academic' && l.name.includes('Library'))?.name || 'Central Library'}.`,
       icon: BookOpen,
       color: "text-green-400",
       bg: "bg-green-400/10",
     },
     {
       id: 4,
-      title: "Hostel Queries",
-      description: `For room allotment, visit ${locations.find(l => l.id === 'hostel-office')?.name || 'Hostel Office'} (${locations.find(l => l.id === 'hostel-office')?.room || 'Office 1'}).`,
+      title: "Hostel Check-in",
+      description: "Collect your room keys from the Warden office (Block H).",
       icon: Home,
       color: "text-orange-400",
       bg: "bg-orange-400/10",
     },
     {
       id: 5,
-      title: "Exam Cell Check",
-      description: `Visit ${locations.find(l => l.id === 'exam-cell')?.name || 'Exam Cell'} (${locations.find(l => l.id === 'exam-cell')?.room || 'Room 210'}) for any result or exam queries.`,
+      title: "Orientation Session",
+      description: "Attend the mandatory orientation in the Main Auditorium.",
       icon: Trophy,
       color: "text-pink-400",
       bg: "bg-pink-400/10",
@@ -76,7 +75,7 @@ export default function FirstDayPage() {
         >
           <BookOpen className="w-10 h-10 text-blue-500" />
         </motion.div>
-        <h1 className="text-4xl font-extrabold tracking-tight">First Day Onboarding</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-white">First Day Onboarding</h1>
         <p className="text-gray-400 max-w-xl mx-auto">
           Welcome to Campus! We&apos;ve prepared a simple checklist to help you navigate your first day without any stress.
         </p>
